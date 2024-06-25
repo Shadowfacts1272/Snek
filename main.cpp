@@ -372,7 +372,7 @@ int main() {
 
 	//Begin!
 	board.print();
-	movelist move_list;
+	/*movelist move_list;
 	board.legal_moves(move_list);
 	search.score_moves(move_list, 1, killer, history, board);
 	board.print_move_scores(move_list);
@@ -381,7 +381,7 @@ int main() {
 	std::cout<<(search.order_psqt[N] [a3] - search.order_psqt[N] [b1]);
 	print_move(pv_table[0][0]);
 	board.push_move(pv_table[0][0]);
-	board.print();
+	board.print();*/
 	/*for (int count = 0; count < pv_length[0]; count++){
   	std::cout<<print_move(pv_table[0][count]);
   }*/
