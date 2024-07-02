@@ -9,7 +9,6 @@
 #include "magics.h"
 #include "preinitialized_arrays.h"
 #include "squares.h"
-//#include "move.h"
 
 enum Piece_Types {P, p, N, n, B, b, R, r, Q, q, K, k, E};
 
@@ -25,7 +24,7 @@ class Legal_Moves{
 		bool Castle_Black_Kingside;
 		bool Castle_Black_Queenside;
 		std::vector <int> Castling_Rights;
-		//en passant square
+		//Remembering en passant squares
 		std::vector <int> En_Passant_Sq;
 		//side to move
 		bool side_to_move;
@@ -35,10 +34,10 @@ class Legal_Moves{
 		inline uint64_t rook_attacks(int square, uint64_t occupancy);
 		inline uint64_t bishop_attacks(int square, uint64_t occupancy);
 		inline uint64_t queen_attacks(int square, uint64_t occupancy);
-		//Rectangular lookup tables
-		uint64_t Rect_Lookup [64] [64]; //[sq1] [sq2]
-		//for initializing Rect_Lookup
-		uint64_t inBetween(int sq1, int sq2);
+		//Rectangular lookup tables ([sq1] [sq2])
+		uint64_t Rect_Lookup [64] [64]; 
+		//For initializing Rect_Lookup 
+		uint64_t in_between(int sq1, int sq2);
 		//init slider piece's attack tables
 		void init_sliders_attacks(int bishop);
 		//update occupancies
@@ -81,23 +80,23 @@ class Legal_Moves{
 		inline void legal_moves(movelist &move_list);
 		inline void legal_captures(movelist &move_list);
 		inline int count_moves();
-		//Piece list for Redundancy
+		//Piece list for Redundancy (E is fun)
 		int piece_list [64] = {
-				E, E, E, E, E, E, E, E,
-				E, E, E, E, E, E, E, E,
-				E, E, E, E, E, E, E, E,
-				E, E, E, E, E, E, E, E,
-				E, E, E, E, E, E, E, E,
-				E, E, E, E, E, E, E, E,
-				E, E, E, E, E, E, E, E,
-				E, E, E, E, E, E, E, E,
+			E, E, E, E, E, E, E, E,
+			E, E, E, E, E, E, E, E,
+			E, E, E, E, E, E, E, E,
+			E, E, E, E, E, E, E, E,
+			E, E, E, E, E, E, E, E,
+			E, E, E, E, E, E, E, E,
+			E, E, E, E, E, E, E, E,
+			E, E, E, E, E, E, E, E,
 		};
-		//print board
+		//print board (and other related stuff)
 		void print();
 		void print_bits(uint64_t bitboards);
 		//Return move encoding
 		inline int get_move(int source, int target, int piece, int capture, int flag, int score){
-			 return (source | (target << 6) | (piece << 12) | (capture << 16) | (flag << 20) | (score << 24));
+			return (source | (target << 6) | (piece << 12) | (capture << 16) | (flag << 20) | (score << 24));
 		}
 		//Make and unmake move
 		inline void push_move(MOVE move);
@@ -112,9 +111,9 @@ class Legal_Moves{
 		inline int static_evaluation();
 		//Zobrist hashing and stuff
 		uint64_t rand64() {
-	  	static uint64_t next = 1;
-	  	next = next * 1103515245 + 12345;
-	  	return next;
+			static uint64_t next = 1;
+			next = next * 1103515245 + 12345;
+			return next;
 		}
 		uint64_t hash = 0;
 		uint64_t piece_keys [13] [64] = {};
@@ -136,32 +135,32 @@ class Legal_Moves{
 			std::cout<<"Castling: ";
 			//Kingside White
 			if (Castling_Rights.back() & 1) {
-    		std::cout<<"K";
-  		}
-			//Queenside White
-  		if (Castling_Rights.back() & 4) {
-    		std::cout<<"Q";
-  		}
-			//Kingside Black
-  		if (Castling_Rights.back() & 2) {
-    		std::cout<<"k";
-  		}
-			//Queenside Black
-  		if (Castling_Rights.back() & 8) {
-    		std::cout<<"q";
-  		}
+    			std::cout<<"K";
+			}
+				//Queenside White
+			if (Castling_Rights.back() & 4) {
+				std::cout<<"Q";
+			}
+				//Kingside Black
+			if (Castling_Rights.back() & 2) {
+				std::cout<<"k";
+			}
+				//Queenside Black
+			if (Castling_Rights.back() & 8) {
+				std::cout<<"q";
+			}
 			std::cout<<std::endl;
 			std::cout<<"En Passant Square: "<<coordinates[En_Passant_Sq.back()]<<"\n";
-			std::cout<<"0x"<<std::hex<<hash<<"\n";
+			//std::cout<<"0x"<<std::hex<<hash<<"\n";
 		}
-
+		//Change side to move
 		void flip(){
 			side_to_move ^= 1;
 		}
 	};
 	
-	inline uint64_t Legal_Moves::rook_attacks(int square, uint64_t occupancy){
-		return lookup_table[rook_magics[square].offset + ((occupancy | rook_premask[square]) * rook_magics[square].magic >> 52)];
+inline uint64_t Legal_Moves::rook_attacks(int square, uint64_t occupancy){
+	return lookup_table[rook_magics[square].offset + ((occupancy | rook_premask[square]) * rook_magics[square].magic >> 52)];
 }
 
 inline uint64_t Legal_Moves::bishop_attacks(int square, uint64_t occupancy){
@@ -172,58 +171,43 @@ inline uint64_t Legal_Moves::queen_attacks(int square, uint64_t occupancy){
 	return rook_attacks(square, occupancy) | bishop_attacks(square, occupancy);
 }
 
-uint64_t Legal_Moves::inBetween(int sq1, int sq2) {
-  const  uint64_t m1   = -1;
-  const  uint64_t a2a7 = 0x0001010101010100;
-  const  uint64_t b2g7 = 0x0040201008040200;
-  const  uint64_t h1b7 = 0x0002040810204080;
-  uint64_t btwn, line, rank, file;
-  btwn  = (m1 << sq1) ^ (m1 << sq2);
-  file  =   (sq2 & 7) - (sq1   & 7);
-  rank  =  ((sq2 | 7) -  sq1) >> 3 ;
-  line  =      (   (file  &  7) - 1) & a2a7;
-  line += 2 * ((   (rank  &  7) - 1) >> 58);
-  line += (((rank - file) & 15) - 1) & b2g7;
-  line += (((rank + file) & 15) - 1) & h1b7;
-  line *= btwn & -btwn;
-  return line & btwn;
+uint64_t Legal_Moves::in_between(int sq1, int sq2) {
+	const uint64_t m1   = -1;
+	const uint64_t a2a7 = 0x0001010101010100;
+	const uint64_t b2g7 = 0x0040201008040200;
+	const uint64_t h1b7 = 0x0002040810204080;
+	uint64_t btwn, line, rank, file;
+	btwn = (m1 << sq1) ^ (m1 << sq2);
+	file = (sq2 & 7) - (sq1   & 7);
+	rank = ((sq2 | 7) -  sq1) >> 3;
+	line = ((file & 7) - 1) & a2a7;
+	line += 2 * (((rank & 7) - 1) >> 58);
+	line += (((rank - file) & 15) - 1) & b2g7;
+	line += (((rank + file) & 15) - 1) & h1b7;
+	line *= btwn & -btwn;
+	return line & btwn;
 }
 
 void Legal_Moves::init_sliders_attacks(int bishop){
-  // loop over 64 board squares
   for (int square = 0; square < 64; square++){
-    // init rook masks
     uint64_t attack_mask = ~rook_premask[square];
-    // init relevant occupancy bit count
     int relevant_bits_count = pop_count(attack_mask);
-    // init occupancy indicies
     int occupancy_indicies = (1 << relevant_bits_count);
-    // loop over occupancy indicies
-    for (int index = 0; index < occupancy_indicies; index++){
-      // init current occupancy variation
-      uint64_t occupancy = set_occupancy(index, relevant_bits_count, attack_mask);
-      // init magic index
-      int magic_index = ((occupancy | rook_premask[square]) * rook_magics[square].magic) >> 52;
-      // init bishop attacks
+		for (int index = 0; index < occupancy_indicies; index++){
+		uint64_t occupancy = set_occupancy(index, relevant_bits_count, attack_mask);
+		int magic_index = ((occupancy | rook_premask[square]) * rook_magics[square].magic) >> 52;
 			lookup_table[magic_index + rook_magics[square].offset] = rook_attacks_on_the_fly(square, occupancy);
 		}
 	}
 	
 	for (int square = 0; square < 64; square++){
-    // init bishop masks
-    uint64_t attack_mask = ~bishop_premask[square];
-    // init relevant occupancy bit count
-    int relevant_bits_count = pop_count(attack_mask);
-    // init occupancy indicies
-    int occupancy_indicies = (1 << relevant_bits_count);
-    // loop over occupancy indicies
-    for (int index = 0; index < occupancy_indicies; index++){
-      // init current occupancy variation
-      uint64_t occupancy = set_occupancy(index, relevant_bits_count, attack_mask);
-      // init magic index
-      int magic_index = ((occupancy | bishop_premask[square]) * bishop_magics[square].magic) >> 55;
-    	// init bishop attacks
-      lookup_table[magic_index + bishop_magics[square].offset] = bishop_attacks_on_the_fly(square, occupancy);
+		uint64_t attack_mask = ~bishop_premask[square];
+		int relevant_bits_count = pop_count(attack_mask);
+		int occupancy_indicies = (1 << relevant_bits_count);
+		for (int index = 0; index < occupancy_indicies; index++){
+			uint64_t occupancy = set_occupancy(index, relevant_bits_count, attack_mask);
+			int magic_index = ((occupancy | bishop_premask[square]) * bishop_magics[square].magic) >> 55;
+			lookup_table[magic_index + bishop_magics[square].offset] = bishop_attacks_on_the_fly(square, occupancy);
 		}
 	}
 }
@@ -254,26 +238,27 @@ inline uint64_t Legal_Moves::absolute_pins(int side, int squareOfKing){
 	pinner = xray_rook_attacks(occupancies[BOTH], occupancies[side ^ 1], squareOfKing) & (bitboards[R + side] | bitboards[Q + side]);
 	while (pinner) {
 		//set square for rook
-    int sq = get_ls1b(pinner);
-    pinned |= Rect_Lookup[sq] [squareOfKing] & occupancies[side ^ 1];
+    	int sq = get_ls1b(pinner);
+    	pinned |= Rect_Lookup[sq] [squareOfKing] & occupancies[side ^ 1];
 		//delete least significant bit
-    pinner &= pinner - 1;
+    	pinner &= pinner - 1;
 	}
 	//Bishop
 	pinner = xray_bishop_attacks(occupancies[BOTH], occupancies[side ^ 1], squareOfKing) & (bitboards[B + side] | bitboards[Q + side]);
 	while (pinner) {
 		//set square for bishop
-    int sq = get_ls1b(pinner);
-    pinned |= Rect_Lookup[sq] [squareOfKing] & occupancies[side ^ 1];
+    	int sq = get_ls1b(pinner);
+    	pinned |= Rect_Lookup[sq] [squareOfKing] & occupancies[side ^ 1];
 		//delete least significant bit
-    pinner &= pinner - 1;
+    	pinner &= pinner - 1;
 	}
 	return pinned;
 }
 
 int Legal_Moves::direction(int sq1, int sq2){
 	if(sq1 == sq2) {
-		return 8; //error, not applicable
+		//No direction found
+		return 8; 
 	}
 	for(int direction = 0; direction < 8; direction++){
 		//finds ray to test on
@@ -284,7 +269,8 @@ int Legal_Moves::direction(int sq1, int sq2){
 			return direction;
 		}
 	}
-	return 8; //if there isn't a ray direction
+	//No direction found
+	return 8;
 }
 
 inline uint64_t Legal_Moves::square_attackers(int square, int Side){
@@ -368,7 +354,6 @@ inline bool Legal_Moves::legal_en_passant(int side, int source, int target){
 	//Bishops and Queens
 	board = bitboards[B + !side] | bitboards[Q + !side];
 	attackers |= bishop_attacks(kingsq, occupancies[BOTH] ^ revise_occ) & board;
-		
 	//Rooks and Queens
 	board = bitboards[R + !side] | bitboards[Q + !side];
 	attackers |= rook_attacks(kingsq, occupancies[BOTH] ^ revise_occ) & board;
@@ -921,12 +906,11 @@ inline void Legal_Moves::set_sq(int sq, int piece){
 }
 	
 void Legal_Moves::push_move(MOVE move){
-	//Add blank values for updation
 	Castling_Rights.push_back(Castling_Rights.back());
 	En_Passant_Sq.push_back(64);
 	//Remove the hashes for updating later on
 	//hash ^= castle_keys[Castling_Rights.back()];
-  //hash ^= en_passant_keys[En_Passant_Sq.back()];
+    //hash ^= en_passant_keys[En_Passant_Sq.back()];
 	int source = move.source();
 	int target = move.target();
 	int piece  =  move.piece();
@@ -1050,7 +1034,7 @@ void Legal_Moves::push_move(MOVE move){
 
 	//Get new hash keys
 	//hash ^= castle_keys[Castling_Rights.back()];
-  //hash ^= en_passant_keys[En_Passant_Sq.back()];
+    //hash ^= en_passant_keys[En_Passant_Sq.back()];
 
 	//update occupancies
 	update_occupancies();
@@ -1062,14 +1046,12 @@ void Legal_Moves::push_move(MOVE move){
 void Legal_Moves::pop_move(MOVE move){
 	//castling and en passant
 	//hash ^= castle_keys[Castling_Rights.back()];
-  //hash ^= en_passant_keys[En_Passant_Sq.back()];
+    //hash ^= en_passant_keys[En_Passant_Sq.back()];
 	Castling_Rights.pop_back();
 	En_Passant_Sq.pop_back();
 	int source = move.source();
 	int target = move.target();
 	int piece  =  move.piece();
-	//get info
-
 	switch(move.flag()){
 		case none: 
 			//remove moving piece to square
@@ -1226,7 +1208,7 @@ void Legal_Moves::Initialize_Everything(std::string input){
 	//rectangular lookup table for pins
 	for(int sq1 = 0; sq1 < 64; sq1++){
 		for(int sq2 = 0; sq2 < 64; sq2++){
-			Rect_Lookup [sq1] [sq2] = inBetween(sq1, sq2);
+			Rect_Lookup [sq1] [sq2] = in_between(sq1, sq2);
 		}
 	}
 }
