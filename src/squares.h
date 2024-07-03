@@ -12,9 +12,9 @@ enum enumSquare {
   a8, b8, c8, d8, e8, f8, g8, h8
 };
 
+//pretty printing stuff
 char promoted_pieces[12] = {' ',' ','n','n','b','b','r','r','q','q',' ',' '};
 
-//pretty printing stuff
 std::string coordinates [65] = {
 	"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
   "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",

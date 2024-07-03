@@ -15,7 +15,7 @@ uint64_t Mirror (uint64_t x) {
    return x;
 }
 
-//Poorly done Parse FEN string function (still does it's job)
+//Poorly done Parse FEN string function
 void Parse_FEN(std::string FEN, uint64_t Bitboards[13], uint64_t occupancies[3], bool &Castle_White_Kingside, bool &Castle_White_Queenside, bool &Castle_Black_Kingside, bool &Castle_Black_Queenside, std::vector<int> &En_Passant_Sq, bool &Side_To_Move, int piece_list[64]){
 	memset(Bitboards, 0ULL, 104);
 	memset(occupancies, 0ULL, 24);
@@ -34,7 +34,7 @@ void Parse_FEN(std::string FEN, uint64_t Bitboards[13], uint64_t occupancies[3],
 	int aRank, aFile;
 	const int inc = -1;
 	
-	//For a8 (because it doesn't work like the other squares for some reason. And I'm too lazy)
+	//For a8
 	switch(reader[0]){
 		case 'p' : Bitboards[1] |= 1ULL << 56; break;
 		case 'r' : Bitboards[7] |= 1ULL << 56; break;

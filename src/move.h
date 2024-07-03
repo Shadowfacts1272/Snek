@@ -32,7 +32,7 @@ struct MOVE {
 	inline int target()   {return (move >> 6) & 0x3f;}
 	inline int piece()    {return (move >> 12) & 0xf;}
 	inline int capture()  {return (move >> 16) & 0xf;}
-	inline int flag()		  {return (move >> 20) & 0xf;}
+	inline int flag()	  {return (move >> 20) & 0xf;}
 	inline int score()    {return (move >> 24) & 0xff;}
 };
 
